@@ -41,7 +41,7 @@ puyu = dict(
     ],
     top_p=0.8,
     top_k=1,
-    temperature=0,
+    temperature=0.8,
     max_new_tokens=8192,
     repetition_penalty=1.02,
     stop_words=['<|im_end|>'])

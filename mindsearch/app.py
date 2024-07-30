@@ -110,7 +110,7 @@ async def run(request: GenerationParams):
             # yield f'data: {response_json}\n\n'
 
     inputs = request.inputs
-    agent = init_agent(lang=os.environ.get('LANG', 'cn'),
+    agent = init_agent(lang=os.environ.get('PROMPT_LANGUAGE', 'cn'),
                        model_format=os.environ.get('MODEL_FORMAT', 'puyu'))
     return EventSourceResponse(generate())
 
