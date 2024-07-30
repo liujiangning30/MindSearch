@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os
 from copy import deepcopy
 from dataclasses import asdict
 from typing import Dict, List, Union
@@ -14,19 +15,17 @@ from sse_starlette.sse import EventSourceResponse
 
 from mindsearch.agent import init_agent
 
+# def parse_arguments():
+#     import argparse
+#     parser = argparse.ArgumentParser(description='MindSearch API')
+#     parser.add_argument('--lang', default='cn', type=str, help='Language')
+#     parser.add_argument('--model_format',
+#                         default='internlm_server',
+#                         type=str,
+#                         help='Model format')
+#     return parser.parse_args()
 
-def parse_arguments():
-    import argparse
-    parser = argparse.ArgumentParser(description='MindSearch API')
-    parser.add_argument('--lang', default='cn', type=str, help='Language')
-    parser.add_argument('--model_format',
-                        default='internlm_server',
-                        type=str,
-                        help='Model format')
-    return parser.parse_args()
-
-
-args = parse_arguments()
+# args = parse_arguments()
 app = FastAPI(docs_url='/')
 
 app.add_middleware(CORSMiddleware,
@@ -111,7 +110,8 @@ async def run(request: GenerationParams):
             # yield f'data: {response_json}\n\n'
 
     inputs = request.inputs
-    agent = init_agent(lang=args.lang, model_format=args.model_format)
+    agent = init_agent(lang=os.environ.get('LANG', 'cn'),
+                       model_format=os.environ.get('MODEL_FORMAT', 'puyu'))
     return EventSourceResponse(generate())
 
 
