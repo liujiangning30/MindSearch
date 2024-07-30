@@ -143,6 +143,10 @@ def node(self, node_name: str) -> str
 
 ## 任务介绍
 通过将一个问题拆分成能够通过搜索回答的子问题(没有关联的问题可以同步并列搜索），每个搜索的问题应该是一个单一问题，即单个具体人、事、物、具体时间点、地点或知识点的问题，不是一个复合问题(比如某个时间段), 一步步构建搜索图，最终回答问题。
+**子问题要求**
+    - **分解问题**：问题应该是单一知识点问题，不要问多个知识点的耦合问题(比如时间段，同个事物的多个方面)，如果是耦合问题，**必须同时添加多个节点**。
+    - **消除歧义**：重新表述查询以消除歧义。这可能需要指定细节、缩小范围，以及解决指代不明的问题。
+    - **独立性**：每个查询应当独立，清晰明确，避免模糊不清。
 
 ## 注意事项
 
@@ -151,7 +155,7 @@ def node(self, node_name: str) -> str
 3. 同样的问题不要重复提问，可以在已有问题的基础上继续提问
 4. 添加 response 节点的时候，要单独添加，不要和其他节点一起添加，不能同时添加 response 节点和其他节点
 5. 一次输出中，不要包含多个代码块，每次只能有一个代码块
-6. 每个代码块应该放置在一个代码块标记中，同时生成完代码后添加一个<end>标志，如下所示：
+6. 每个代码块应该放置在一个代码块标记中，同时生成完代码后添加一个<|action_end|>标志，如下所示：
     <|action_start|><|interpreter|>```python
     # 你的代码块
     ```<|action_end|>
@@ -236,6 +240,10 @@ def node(self, node_name: str) -> str
 
 ## Task Description
 By breaking down a question into sub-questions that can be answered through searches (unrelated questions can be searched concurrently), each search query should be a single question focusing on a specific person, event, object, specific time point, location, or knowledge point. It should not be a compound question (e.g., a time period). Step by step, build the search graph to finally answer the question.
+**Sub-question requirements**
+- **Decompose Questions**: Questions should focus on a single knowledge point. Avoid asking multiple coupled knowledge points (e.g., time periods, multiple aspects of the same object). If it's a coupled question, **you must add multiple nodes simultaneously**.
+- **Disambiguate**: Reformulate the query to eliminate ambiguities. This may require specifying details, narrowing the scope, and resolving unclear references.
+- **Independence**: Each query should be independent, clear, and unambiguous.
 
 ## Considerations
 
@@ -244,7 +252,7 @@ By breaking down a question into sub-questions that can be answered through sear
 3. Do not repeat the same question; continue asking based on existing questions.
 4. When adding a response node, add it separately; do not add a response node and other nodes simultaneously.
 5. In a single output, do not include multiple code blocks; only one code block per output.
-6. Each code block should be placed within a code block marker, and after generating the code, add an <end> tag as shown below:
+6. Each code block should be placed within a code block marker, and after generating the code, add an <|action_end|> tag as shown below:
     <|action_start|><|interpreter|>
     ```python
     # Your code block

@@ -65,7 +65,8 @@ async def run(request: GenerationParams):
             # 使用 run_in_executor 将同步生成器包装成异步生成器
             def sync_generator_wrapper():
                 try:
-                    for response in agent.stream_chat(inputs):
+                    for response in agent.stream_chat(inputs,
+                                                      return_early=True):
                         queue.sync_q.put(response)
                 except KeyError as e:
                     logging.error(f'KeyError in sync_generator_wrapper: {e}')
