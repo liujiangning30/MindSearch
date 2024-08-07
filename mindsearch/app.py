@@ -60,6 +60,7 @@ async def run(request: GenerationParams):
     async def generate():
         try:
             queue = janus.Queue()
+            stop_event = asyncio.Event()
 
             # 使用 run_in_executor 将同步生成器包装成异步生成器
             def sync_generator_wrapper():
@@ -86,6 +87,7 @@ async def run(request: GenerationParams):
                             response,
                             tuple) and response.state == AgentStatusCode.END:
                         break
+                stop_event.set()  # Inform sync_generator_wrapper to stop
 
             async for response in async_generator_wrapper():
                 if isinstance(response, tuple):
@@ -115,6 +117,8 @@ async def run(request: GenerationParams):
             yield {'data': response_json}
             # yield f'data: {response_json}\n\n'
         finally:
+            await stop_event.wait(
+            )  # Waiting for async_generator_wrapper to stop
             queue.close()
             await queue.wait_closed()
 
