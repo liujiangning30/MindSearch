@@ -30,7 +30,7 @@ gpt4 = dict(type=GPTAPI,
 
 puyu = dict(
     type=GPTAPI,
-    model_type='internlm2.5-latest',
+    model_type='internlm2.5-latest-inner',
     openai_api_base='https://puyu.openxlab.org.cn/puyu/api/v1/chat/completions',
     key=os.environ.get('PUYU_API_KEY', 'YOUR PUYU API KEY'),
     meta_template=[
