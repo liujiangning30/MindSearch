@@ -340,13 +340,13 @@ class MindSearchAgent(BaseAgent):
             if numbers:
                 try:
                     assert all(str(elem) in ref2url for elem in numbers)
+                    if ref2url:
+                        references_url.update({
+                            str(idx + self.ptr): ref2url[str(idx)]
+                            for idx in set(numbers)
+                        })
                 except Exception as exc:
                     logger.info(f'Illegal reference id: {str(exc)}')
-                if ref2url:
-                    references_url.update({
-                        str(idx + self.ptr): ref2url[str(idx)]
-                        for idx in set(numbers)
-                    })
                 self.ptr += max(numbers) + 1
             references.append(updated_ref)
         return '\n'.join(references), references_url
