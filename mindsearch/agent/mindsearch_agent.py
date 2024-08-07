@@ -149,6 +149,15 @@ class WebSearchGraph:
                         node_content,
                         self.nodes['root']['content'],
                         parent_response=parent_response):
+                    for action in answer.actions:
+                        ref_results = action.result[0]['content']
+                        ref_results = json.loads(ref_results)
+                        for idx, item in ref_results.items():
+                            item.pop('summ', None)
+                            item.pop('content', None)
+                        action.result[0]['content'] = json.dumps(
+                            ref_results, ensure_ascii=False)
+                    answer.inner_steps = None
                     self.searcher_resp_queue.put(
                         deepcopy((node_name,
                                   dict(response=answer.response,
@@ -307,25 +316,37 @@ class MindSearchAgent(BaseAgent):
         references = []
         references_url = dict()
         for node_name in node_list:
+            ref_results = None
+            ref2url = None
             if as_dict:
-                ref_results = agent_return.nodes[node_name]['detail'][
-                    'actions'][0]['result'][0]['content']
+                actions = agent_return.nodes[node_name]['detail']['actions']
             else:
-                ref_results = agent_return.nodes[node_name]['detail'].actions[
-                    0].result[0]['content']
-            ref_results = json.loads(ref_results)
-            ref2url = {idx: item['url'] for idx, item in ref_results.items()}
+                actions = agent_return.nodes[node_name]['detail'].actions
+            if actions:
+                ref_results = actions[0]['result'][0][
+                    'content'] if as_dict else actions[0].result[0]['content']
+            if ref_results:
+                ref_results = json.loads(ref_results)
+                ref2url = {
+                    idx: item['url']
+                    for idx, item in ref_results.items()
+                }
+
             ref = f"## {node_name}\n\n{agent_return.nodes[node_name]['response']}\n"
             updated_ref = re.sub(
                 r'\[\[(\d+)\]\]',
                 lambda match: f'[[{int(match.group(1)) + self.ptr}]]', ref)
             numbers = [int(n) for n in re.findall(r'\[\[(\d+)\]\]', ref)]
             if numbers:
-                assert all(str(elem) in ref2url for elem in numbers)
-                references_url.update({
-                    str(idx + self.ptr): ref2url[str(idx)]
-                    for idx in set(numbers)
-                })
+                try:
+                    assert all(str(elem) in ref2url for elem in numbers)
+                except Exception as exc:
+                    logger.info(f'Illegal reference id: {str(exc)}')
+                if ref2url:
+                    references_url.update({
+                        str(idx + self.ptr): ref2url[str(idx)]
+                        for idx in set(numbers)
+                    })
                 self.ptr += max(numbers) + 1
             references.append(updated_ref)
         return '\n'.join(references), references_url
@@ -364,46 +385,45 @@ class MindSearchAgent(BaseAgent):
         ordered_nodes = []
         active_node = None
 
-        while True:
-            try:
-                item = self.local_dict.get('graph').searcher_resp_queue.get(
-                    timeout=60)
-                if item is WebSearchGraph.end_signal:
-                    for node_name in ordered_nodes:
-                        # resp = None
-                        for resp in responses[node_name]:
-                            yield deepcopy(resp)
-                        # if resp:
-                        #     assert resp[1][
-                        #         'detail'].state == AgentStatusCode.END
-                    break
-                node_name, node, adj = item
-                if node_name in ['root', 'response']:
-                    yield deepcopy((node_name, node, adj))
-                else:
+        def fetch_from_queue():
+            while True:
+                try:
+                    item = self.local_dict.get(
+                        'graph').searcher_resp_queue.get(timeout=60)
+                    if item is WebSearchGraph.end_signal:
+                        ordered_nodes.append(WebSearchGraph.end_signal)
+                        break
+                    node_name, node, adj = item
                     if node_name not in ordered_nodes:
                         ordered_nodes.append(node_name)
                     responses[node_name].append((node_name, node, adj))
-                    if not active_node and ordered_nodes:
-                        active_node = ordered_nodes[0]
-                    while active_node and responses[active_node]:
-                        if return_early:
-                            if 'detail' in responses[active_node][-1][
-                                    1] and responses[active_node][-1][1][
-                                        'detail'].state == AgentStatusCode.END:
-                                item = responses[active_node][-1]
-                            else:
-                                item = responses[active_node].pop(0)
-                        else:
-                            item = responses[active_node].pop(0)
-                        if 'detail' in item[1] and item[1][
-                                'detail'].state == AgentStatusCode.END:
-                            ordered_nodes.pop(0)
-                            responses[active_node].clear()
-                            active_node = None
-                        yield deepcopy(item)
-            except queue.Empty:
-                if not producer_thread.is_alive():
-                    break
+                except queue.Empty:
+                    if not producer_thread.is_alive():
+                        break
+
+        # 启动线程从队列中获取元素
+        fetch_thread = threading.Thread(target=fetch_from_queue)
+        fetch_thread.start()
+
+        while True:
+            if active_node is None and ordered_nodes:
+                active_node = ordered_nodes[0]
+            if active_node is WebSearchGraph.end_signal:
+                break
+            while active_node and responses[active_node]:
+                if return_early:
+                    item = responses[active_node][-1]
+                else:
+                    item = responses[active_node].pop(0)
+                if active_node in [
+                        'root', 'response'
+                ] or ('detail' in item[1]
+                      and item[1]['detail'].state == AgentStatusCode.END):
+                    ordered_nodes.pop(0)
+                    responses[active_node].clear()
+                    active_node = None
+                yield deepcopy(item)
+
+        fetch_thread.join()  # 确保线程结束
         producer_thread.join()
         return
