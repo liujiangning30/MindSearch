@@ -149,6 +149,11 @@ class WebSearchGraph:
                         node_content,
                         self.nodes['root']['content'],
                         parent_response=parent_response):
+                    if answer.state in [
+                            AgentStatusCode.PLUGIN_START,
+                            AgentStatusCode.PLUGIN_END, 3, 4
+                    ]:
+                        continue
                     for action in answer.actions:
                         ref_results = action.result[0]['content']
                         ref_results = json.loads(ref_results)
