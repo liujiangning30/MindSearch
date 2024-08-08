@@ -171,6 +171,7 @@ class WebSearchGraph:
                 self.nodes[node_name]['detail'] = answer
             except Exception as e:
                 logger.exception(f'Error in model_stream_thread: {e}')
+                raise
 
         self.future_to_query[self.executor.submit(
             model_stream_thread)] = f'{node_name}-{node_content}'
