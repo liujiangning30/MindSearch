@@ -368,6 +368,8 @@ class MindSearchAgent(BaseAgent):
                 return single_match.group(1)
             return text
 
+        exit_flag = threading.Event()
+
         def run_command(cmd):
             try:
                 exec(cmd, globals(), self.local_dict)
@@ -379,6 +381,10 @@ class MindSearchAgent(BaseAgent):
                 plan_graph.searcher_resp_queue.put(plan_graph.end_signal)
             except Exception as e:
                 logger.exception(f'Error executing code: {e}')
+                exit_flag.set()
+                if 'graph' in self.local_dict:
+                    for future in self.local_dict['graph'].future_to_query:
+                        future.cancel()
                 raise
 
         command = extract_code(command)
@@ -391,7 +397,7 @@ class MindSearchAgent(BaseAgent):
         active_node = None
 
         def fetch_from_queue():
-            while True:
+            while not exit_flag.is_set():
                 try:
                     item = self.local_dict.get(
                         'graph').searcher_resp_queue.get(timeout=60)
@@ -410,7 +416,7 @@ class MindSearchAgent(BaseAgent):
         fetch_thread = threading.Thread(target=fetch_from_queue)
         fetch_thread.start()
 
-        while True:
+        while not exit_flag.is_set():
             if active_node is None and ordered_nodes:
                 active_node = ordered_nodes[0]
             if active_node is WebSearchGraph.end_signal:
