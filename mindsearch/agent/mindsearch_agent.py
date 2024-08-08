@@ -411,10 +411,10 @@ class MindSearchAgent(BaseAgent):
             if active_node is WebSearchGraph.end_signal:
                 break
             while active_node and responses[active_node]:
-                if return_early:
-                    item = responses[active_node][-1]
-                else:
-                    item = responses[active_node].pop(0)
+                # if return_early:
+                #     item = responses[active_node][-1]
+                # else:
+                item = responses[active_node].pop(0)
                 if active_node in [
                         'root', 'response'
                 ] or ('detail' in item[1]
