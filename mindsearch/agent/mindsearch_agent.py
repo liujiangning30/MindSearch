@@ -395,6 +395,7 @@ class MindSearchAgent(BaseAgent):
 
         responses = defaultdict(list)
         ordered_nodes = []
+        root_response_edges = []
         active_node = None
 
         def fetch_from_queue():
@@ -406,6 +407,9 @@ class MindSearchAgent(BaseAgent):
                         ordered_nodes.append(WebSearchGraph.end_signal)
                         break
                     node_name, node, adj = item
+                    if node_name in ['root', 'response'] or adj is not None:
+                        root_response_edges.append(item)
+                        continue
                     if node_name not in ordered_nodes:
                         ordered_nodes.append(node_name)
                     responses[node_name].append((node_name, node, adj))
@@ -418,6 +422,9 @@ class MindSearchAgent(BaseAgent):
         fetch_thread.start()
 
         while not exit_flag.is_set():
+            while root_response_edges:
+                item = root_response_edges.pop(0)
+                yield deepcopy(item)
             if active_node is None and ordered_nodes:
                 active_node = ordered_nodes[0]
             if active_node is WebSearchGraph.end_signal:
@@ -427,10 +434,8 @@ class MindSearchAgent(BaseAgent):
                 #     item = responses[active_node][-1]
                 # else:
                 item = responses[active_node].pop(0)
-                if active_node in [
-                        'root', 'response'
-                ] or ('detail' in item[1]
-                      and item[1]['detail'].state == AgentStatusCode.END):
+                if 'detail' in item[1] and item[1][
+                        'detail'].state == AgentStatusCode.END:
                     ordered_nodes.pop(0)
                     responses[active_node].clear()
                     active_node = None
