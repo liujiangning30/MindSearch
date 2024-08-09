@@ -407,7 +407,7 @@ class MindSearchAgent(BaseAgent):
                         ordered_nodes.append(WebSearchGraph.end_signal)
                         break
                     node_name, node, adj = item
-                    if node_name in ['root', 'response'] or adj is not None:
+                    if node_name in ['root', 'response'] or adj:
                         root_response_edges.append(item)
                         continue
                     if node_name not in ordered_nodes:
