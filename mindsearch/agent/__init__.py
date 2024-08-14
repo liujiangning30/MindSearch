@@ -37,6 +37,7 @@ def init_agent(lang='cn', model_format='internlm_server'):
             llm=llm,
             plugin_executor=ActionExecutor(
                 BingBrowser(searcher_type='DuckDuckGoSearch',
+                            proxy=os.environ.get('PROXY', None),
                             topk=6,
                             api_key=os.environ.get('BING_API_KEY',
                                                    'YOUR BING API'))),
