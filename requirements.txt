@@ -1,5 +1,5 @@
 fastapi
-git+https://github.com/InternLM/lagent.git
+git+https://github.com/liujiangning30/lagent.git@ljn/upgrade_ddgs#egg=lagent
 duckduckgo_search==6.2.8b1
 gradio
 janus
