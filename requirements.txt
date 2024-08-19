@@ -1,6 +1,6 @@
-duckduckgo_search==6.2.8b1
 fastapi
 git+https://github.com/InternLM/lagent.git
+duckduckgo_search==6.2.8b1
 gradio
 janus
 # lmdeploy==0.2.3
