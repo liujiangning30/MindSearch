@@ -36,11 +36,15 @@ def init_agent(lang='cn', model_format='internlm_server'):
         searcher_cfg=dict(
             llm=llm,
             plugin_executor=ActionExecutor(
-                BingBrowser(searcher_type='DuckDuckGoSearch',
-                            proxy=os.environ.get('PROXY', None),
-                            topk=6,
-                            api_key=os.environ.get('BING_API_KEY',
-                                                   'YOUR BING API'))),
+                BingBrowser(
+                    searcher_type='TencentSearch',
+                    # proxy=os.environ.get('PROXY', None),
+                    topk=6,
+                    secret_id=os.environ.get('TENCENT_SECRETID',
+                                             'Your tencent SecretId'),
+                    secret_key=os.environ.get('TENCENT_SECRETKEY',
+                                              'Your tencent SecretKey'),
+                    api_key=os.environ.get('BING_API_KEY', 'YOUR BING API'))),
             protocol=MindSearchProtocol(
                 meta_prompt=datetime.now().strftime(
                     'The current date is %Y-%m-%d.'),

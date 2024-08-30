@@ -1,8 +1,8 @@
-fastapi
-git+https://github.com/liujiangning30/lagent.git@ljn/upgrade_ddgs#egg=lagent
 duckduckgo_search==6.2.8b1
+fastapi
 gradio
 janus
+git+https://github.com/liujiangning30/lagent.git@ljn/tencent_search#egg=lagent
 # lmdeploy==0.2.3
 pyvis
 sse-starlette
